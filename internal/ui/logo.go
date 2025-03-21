@@ -104,9 +104,16 @@ func (l *Logo) refreshLogo(c config.Color) {
 	l.mx.Lock()
 	defer l.mx.Unlock()
 	l.logo.Clear()
-	for i, s := range LogoSmall {
-		fmt.Fprintf(l.logo, "[%s::b]%s", c, s)
-		if i+1 < len(LogoSmall) {
+	for i, s := range RaceLogoNew {
+		first := config.Color("blue")
+		second := config.Color("red")
+		third := config.Color("lightblue")
+
+		fmt.Fprintf(l.logo, "[%s::b]%s", c, s[:25])
+		fmt.Fprintf(l.logo, "[%s::b]%s", first, s[25:(32-i)])
+		fmt.Fprintf(l.logo, "[%s::b]%s", second, s[(32-i):(35-i)])
+		fmt.Fprintf(l.logo, "[%s::b]%s", third, s[(35-i):])
+		if i+1 < len(RaceLogoNew) {
 			fmt.Fprintf(l.logo, "\n")
 		}
 	}
