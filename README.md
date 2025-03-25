@@ -66,12 +66,27 @@ Your donations will go a long way in keeping our servers lights on and beers in 
 
 Please refer to our [K9s documentation](https://k9scli.io) site for installation, usage, customization and tips.
 
+---
+
 ## Slack Channel
 
 Wanna discuss K9s features with your fellow `K9sers` or simply show your support for this tool?
 
 * Channel: [K9sersSlack](https://k9sers.slack.com/)
 * Invite: [K9slackers Invite](https://join.slack.com/t/k9sers/shared_invite/enQtOTA5MDEyNzI5MTU0LWQ1ZGI3MzliYzZhZWEyNzYxYzA3NjE0YTk1YmFmNzViZjIyNzhkZGI0MmJjYzhlNjdlMGJhYzE2ZGU1NjkyNTM)
+
+---
+
+## 🥳 A Word From Our Rhodium Sponsors...
+
+Below are organizations that have opted to show their support and sponsor K9s.
+
+<br/>
+<a href="https://panfactum.com"><img src="assets/sponsors/panfactum.png" alt="panfactum"></a>
+<br/>
+<br/>
+
+---
 
 ## Installation
 
@@ -117,7 +132,7 @@ Binaries for Linux, Windows and Mac are available as tarballs in the [release pa
 * On Ubuntu
 
   ```shell
-  wget https://github.com/derailed/k9s/releases/download/v0.32.7/k9s_linux_amd64.deb && apt install ./k9s_linux_amd64.deb && rm k9s_linux_amd64.deb
+  wget https://github.com/derailed/k9s/releases/latest/download/k9s_linux_amd64.deb && apt install ./k9s_linux_amd64.deb && rm k9s_linux_amd64.deb
   ```
 
 * Via [Winget](https://github.com/microsoft/winget-cli) for Windows
@@ -627,7 +642,7 @@ The annotation value must specify a container to forward to as well as a local p
 
 ---
 
-## Resource Custom Columns
+## Custom Views
 
 [SneakCast v0.17.0 on The Beach! - Yup! sound is sucking but what a setting!](https://youtu.be/7S33CNLAofk)
 
@@ -654,6 +669,7 @@ You can have one or more of the following attributes:
 * `T` -> time column indicator
 * `N` -> number column indicator
 * `W` -> turns on wide column aka only shows while in wide mode. Defaults to the standard resource definition when present.
+* `S` -> Ensures a column is visible and not wide. Overrides `wide` std resource definition if present.
 * `H` -> Hides the column
 * `L` -> Left align (default)
 * `R` -> Right align
@@ -674,6 +690,25 @@ views:
       - NODE
       - STATUS
       - READY
+      - MEM/RL|S                                         # => 🌚 Overrides std resource default wide attribute via `S` for `Show`
+      - '%MEM/R|'                                        # => NOTE! column names with non alpha names need to be quoted as columns must be strings!
+
+  v1/pods@fred:                                          # => 🌚 New v0.40.6! Customize columns for a given resource and namespace!
+    columns:
+      - AGE
+      - NAME|WR
+
+  v1/pods@kube*:                                         # => 🌚 New v0.40.6! You can also specify a namespace using a regular expression.
+    columns:
+      - NAME
+      - AGE
+      - LABELS
+
+  cool-kid:                                              # => 🌚 New v0.40.8! You can also reference a specific alias and display a custom view for it
+    columns:
+      - AGE
+      - NAMESPACE|WR
+
   v1/services:
     columns:
       - AGE
@@ -689,7 +724,15 @@ views:
 
 ## Plugins
 
-K9s allows you to extend your command line and tooling by defining your very own cluster commands via plugins. K9s will look at `$XDG_CONFIG_HOME/k9s/plugins.yaml` to locate all available plugins.
+K9s allows you to extend your command line and tooling by defining your very own cluster commands via plugins.
+Minimally we look at `$XDG_CONFIG_HOME/k9s/plugins.yaml` to locate all available plugins.
+Additionally, K9s will scan the following directories for additional plugins:
+
+* `$XDG_CONFIG_HOME/k9s/plugins`
+* `$XDG_DATA_HOME/k9s/plugins`
+* `$XDG_DATA_DIRS/k9s/plugins`
+
+The plugin file content can be either a single plugin snippet, a collections of snippets or a complete plugins definition (see examples below...).
 
 A plugin is defined as follows:
 
@@ -723,12 +766,15 @@ K9s does provide additional environment variables for you to customize your plug
 
 Curly braces can be used to embed an environment variable inside another string, or if the column name contains special characters. (e.g. `${NAME}-example` or `${COL-%CPU/L}`)
 
-### Plugin Example
+### Plugin Examples
 
-This defines a plugin for viewing logs on a selected pod using `ctrl-l` as shortcut.
+Define several plugins and host them in a single file. These can leave in the K9s root config so that they are available on any clusters. Additionally, you can define cluster/context specific plugins for your clusters of choice by adding clusterA/contextB/plugins.yaml file.
+
+The following defines a plugin for viewing logs on a selected pod using `ctrl-l` as shortcut.
 
 ```yaml
-#  $XDG_DATA_HOME/k9s/plugins.yaml
+# Define several plugins in a single file in the K9s root configuration
+# $XDG_DATA_HOME/k9s/plugins.yaml
 plugins:
   # Defines a plugin to provide a `ctrl-l` shortcut to tail the logs while in pod view.
   fred:
@@ -750,6 +796,41 @@ plugins:
     - $NAMESPACE
     - --context
     - $CONTEXT
+```
+
+Similarly you can define the plugin above in a directory using either a file per plugin or several plugins per files as follow...
+
+The following defines two plugins namely fred and zorg.
+
+```yaml
+# Multiple plugins in a single file...
+# Note: as of v0.40.9 you can have ad-hoc plugin dirs
+# Loads plugins fred and zorg
+# $XDG_DATA_HOME/k9s/plugins/misc-plugins/blee.yaml
+fred:
+  shortCut: Shift-B
+  description: Bozo
+  scopes:
+  - deploy
+  command: bozo
+
+zorg:
+  shortCut: Shift-Z
+  description: Pod logs
+  scopes:
+  - svc
+  command: zorg
+```
+
+Lastly you can define plugin snippets in their own file. The snippet will be named from the file name. In this case, we define a `bozo` plugin using a plugin snippet.
+
+```yaml
+# $XDG_DATA_HOME/k9s/plugins/schtuff/bozo.yaml
+shortCut: Shift-B
+description: Bozo
+scopes:
+- deploy
+command: bozo
 ```
 
 > NOTE: This is an experimental feature! Options and layout may change in future K9s releases as this feature solidifies.
@@ -937,13 +1018,13 @@ Colors can be defined by name or using a hex representation. Of recent, we've ad
 > NOTE: This is very much an experimental feature at this time, more will be added/modified if this feature has legs so thread accordingly!
 > NOTE: Please see [K9s Skins](https://k9scli.io/topics/skins/) for a list of available colors.
 
-To skin a specific context and provided the file `in_the_navy.yaml` is present in your skins directory.
+To skin a specific context and provided the file `in-the-navy.yaml` is present in your skins directory.
 
 ```yaml
 #  $XDG_DATA_HOME/k9s/clusters/clusterX/contextY/config.yaml
 k9s:
   cluster: clusterX
-  skin: in_the_navy
+  skin: in-the-navy
   readOnly: false
   namespace:
     active: default
@@ -1010,7 +1091,7 @@ k9s:
 ```
 
 ```yaml
-# $XDG_DATA_HOME/k9s/skins/in_the_navy.yaml
+# $XDG_DATA_HOME/k9s/skins/in-the-navy.yaml
 # Skin InTheNavy!
 k9s:
   # General K9s styles
@@ -1140,4 +1221,4 @@ We always enjoy hearing from folks who benefit from our work!
 
 ---
 
-<img src="assets/imhotep_logo.png" width="32" height="auto" alt="Imhotep"/> &nbsp;© 2023 Imhotep Software LLC. All materials licensed under [Apache v2.0](http://www.apache.org/licenses/LICENSE-2.0)
+<img src="assets/imhotep_logo.png" width="32" height="auto" alt="Imhotep"/> &nbsp;© 2025 Imhotep Software LLC. All materials licensed under [Apache v2.0](http://www.apache.org/licenses/LICENSE-2.0)

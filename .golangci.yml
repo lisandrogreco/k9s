@@ -50,7 +50,12 @@ linters-settings:
   goimports:
     local-prefixes: github.com/cilium/cilium
   unused:
-    go: "1.23"
+    parameters-are-used: true
+    local-variables-are-used: true
+    field-writes-are-uses: true
+    post-statements-are-reads: true
+    exported-fields-are-used: true
+    generated-is-used: true
   goheader:
     values:
       regexp:
@@ -61,28 +66,67 @@ linters-settings:
   gosec:
     includes:
       - G402
-  gomodguard:
-    blocked:
-      modules:
-        - github.com/miekg/dns:
-            recommendations:
-              - github.com/cilium/dns
-            reason: "use the cilium fork directly to avoid replace directives in go.mod, see https://github.com/cilium/cilium/pull/27582"
-        - gopkg.in/check.v1:
-            recommendations:
-              - testing
-              - github.com/stretchr/testify/assert
-            reason: "gocheck has been deprecated, see https://docs.cilium.io/en/latest/contributing/testing/unit/#migrating-tests-off-of-gopkg-in-check-v1"
-        - go.uber.org/multierr:
-            recommendations:
-              - errors
-            reason: "Go 1.20+ has support for combining multiple errors, see https://go.dev/doc/go1.20#errors"
+  sloglint:
+    # Enforce not mixing key-value pairs and attributes.
+    # https://github.com/go-simpler/sloglint?tab=readme-ov-file#no-mixed-arguments
+    # Default: true
+    no-mixed-args: true
+    # Enforce using key-value pairs only (overrides no-mixed-args, incompatible with attr-only).
+    # https://github.com/go-simpler/sloglint?tab=readme-ov-file#key-value-pairs-only
+    # Default: false
+    kv-only: true
+    # Enforce using attributes only (overrides no-mixed-args, incompatible with kv-only).
+    # https://github.com/go-simpler/sloglint?tab=readme-ov-file#attributes-only
+    # Default: false
+    attr-only: false
+    # Enforce not using global loggers.
+    # Values:
+    # - "": disabled
+    # - "all": report all global loggers
+    # - "default": report only the default slog logger
+    # https://github.com/go-simpler/sloglint?tab=readme-ov-file#no-global
+    # Default: ""
+    no-global: ""
+    # Enforce using methods that accept a context.
+    # Values:
+    # - "": disabled
+    # - "all": report all contextless calls
+    # - "scope": report only if a context exists in the scope of the outermost function
+    # https://github.com/go-simpler/sloglint?tab=readme-ov-file#context-only
+    # Default: ""
+    context: ""
+    # Enforce using static values for log messages.
+    # https://github.com/go-simpler/sloglint?tab=readme-ov-file#static-messages
+    # Default: false
+    static-msg: false
+    # Enforce using constants instead of raw keys.
+    # https://github.com/go-simpler/sloglint?tab=readme-ov-file#no-raw-keys
+    # Default: false
+    no-raw-keys: true
+    # Enforce a single key naming convention.
+    # Values: snake, kebab, camel, pascal
+    # https://github.com/go-simpler/sloglint?tab=readme-ov-file#key-naming-convention
+    # Default: ""
+    key-naming-case: camel
+    # Enforce not using specific keys.
+    # https://github.com/go-simpler/sloglint?tab=readme-ov-file#forbidden-keys
+    # Default: []
+    forbidden-keys:
+      - time
+      - level
+      - msg
+      - source
+    # Enforce putting arguments on separate lines.
+    # https://github.com/go-simpler/sloglint?tab=readme-ov-file#arguments-on-separate-lines
+    # Default: false
+    args-on-sep-lines: false
+
 
 issues:
 
   # default is true. Enables skipping of directories:
   #   vendor$, third_party$, testdata$, examples$, Godeps$, builtin$
-  skip-dirs-use-default: true
+  exclude-dirs-use-default: true
 
   # Excluding configuration per-path, per-linter, per-text and per-source
   exclude-rules:
@@ -124,3 +168,5 @@ linters:
     - misspell
     - prealloc
     - typecheck
+    - sloglint
+
