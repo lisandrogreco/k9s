@@ -6,20 +6,23 @@ package client
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/derailed/k9s/internal/slogs"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	restclient "k8s.io/client-go/rest"
-	clientcmd "k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 const (
-	defaultCallTimeoutDuration time.Duration = 10 * time.Second
+	// DefaultCallTimeoutDuration is the default api server call timeout duration.
+	DefaultCallTimeoutDuration time.Duration = 15 * time.Second
 
 	// UsePersistentConfig caches client config to avoid reloads.
 	UsePersistentConfig = true
@@ -42,12 +45,13 @@ func NewConfig(f *genericclioptions.ConfigFlags) *Config {
 // CallTimeout returns the call timeout if set or the default if not set.
 func (c *Config) CallTimeout() time.Duration {
 	if !isSet(c.flags.Timeout) {
-		return defaultCallTimeoutDuration
+		return DefaultCallTimeoutDuration
 	}
 	dur, err := time.ParseDuration(*c.flags.Timeout)
 	if err != nil {
-		return defaultCallTimeoutDuration
+		return DefaultCallTimeoutDuration
 	}
+	slog.Debug("APIServer timeout", slogs.Duration, dur)
 
 	return dur
 }
@@ -94,6 +98,9 @@ func (c *Config) SwitchContext(name string) error {
 	flags.Impersonate = c.flags.Impersonate
 	flags.ImpersonateGroup = c.flags.ImpersonateGroup
 	flags.ImpersonateUID = c.flags.ImpersonateUID
+	flags.Insecure = c.flags.Insecure
+	flags.BearerToken = c.flags.BearerToken
+
 	c.flags = flags
 
 	return nil
