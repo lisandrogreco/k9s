@@ -32,7 +32,7 @@ func NewLogo(styles *config.Styles) *Logo {
 	l.SetDirection(tview.FlexRow)
 	l.AddItem(l.logo, 6, 1, false)
 	l.AddItem(l.status, 1, 1, false)
-	l.refreshLogo(styles.Body().LogoColor)
+	l.refreshLogo(styles.Body().LogoColor, l.styles.Body().IconColor1, l.styles.Body().IconColor2, l.styles.Body().IconColor3)
 	l.SetBackgroundColor(styles.BgColor())
 	styles.AddListener(&l)
 
@@ -55,7 +55,7 @@ func (l *Logo) StylesChanged(s *config.Styles) {
 	l.SetBackgroundColor(l.styles.BgColor())
 	l.status.SetBackgroundColor(l.styles.BgColor())
 	l.logo.SetBackgroundColor(l.styles.BgColor())
-	l.refreshLogo(l.styles.Body().LogoColor)
+	l.refreshLogo(l.styles.Body().LogoColor, l.styles.Body().IconColor1, l.styles.Body().IconColor2, l.styles.Body().IconColor3)
 }
 
 // IsBenchmarking checks if benchmarking is active or not.
@@ -87,7 +87,7 @@ func (l *Logo) Info(msg string) {
 
 func (l *Logo) update(msg string, c config.Color) {
 	l.refreshStatus(msg, c)
-	l.refreshLogo(c)
+	l.refreshLogo(c, c, c, c)
 }
 
 func (l *Logo) refreshStatus(msg string, c config.Color) {
@@ -100,14 +100,11 @@ func (l *Logo) refreshStatus(msg string, c config.Color) {
 	)
 }
 
-func (l *Logo) refreshLogo(c config.Color) {
+func (l *Logo) refreshLogo(c config.Color, first config.Color, second config.Color, third config.Color) {
 	l.mx.Lock()
 	defer l.mx.Unlock()
 	l.logo.Clear()
 	for i, s := range RaceLogoNew {
-		first := config.Color("blue")
-		second := config.Color("red")
-		third := config.Color("lightblue")
 
 		fmt.Fprintf(l.logo, "[%s::b]%s", c, s[:25])
 		fmt.Fprintf(l.logo, "[%s::b]%s", first, s[25:(32-i)])

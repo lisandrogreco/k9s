@@ -94,6 +94,9 @@ type (
 		FgColor        Color `json:"fgColor" yaml:"fgColor"`
 		BgColor        Color `json:"bgColor" yaml:"bgColor"`
 		LogoColor      Color `json:"logoColor" yaml:"logoColor"`
+		IconColor1     Color `json:"iconColor1" yaml:"iconColor1"`
+		IconColor2     Color `json:"iconColor2" yaml:"iconColor2"`
+		IconColor3     Color `json:"iconColor3" yaml:"iconColor3"`
 		LogoColorMsg   Color `json:"logoColorMsg" yaml:"logoColorMsg"`
 		LogoColorInfo  Color `json:"logoColorInfo" yaml:"logoColorInfo"`
 		LogoColorWarn  Color `json:"logoColorWarn" yaml:"logoColorWarn"`

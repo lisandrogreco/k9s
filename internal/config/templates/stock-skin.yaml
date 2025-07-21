@@ -8,6 +8,9 @@ k9s:
     fgColor: cadetblue
     bgColor: black
     logoColor: orange
+    iconColor1: blue
+    iconColor2: red
+    iconColor3: lightblue
     logoColorMsg: white
     logoColorInfo: green
     logoColorWarn: mediumvioletred
