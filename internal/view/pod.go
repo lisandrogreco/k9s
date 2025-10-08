@@ -580,8 +580,7 @@ func getPodOS(f dao.Factory, fqn string) (string, error) {
 			return nodeOS, nil
 		}
 	}
-	return "linux", nil
-	//return "", errors.New("no os information available")
+	return "", errors.New("no os information available")
 }
 
 func osFromSelector(s map[string]string) (string, bool) {
