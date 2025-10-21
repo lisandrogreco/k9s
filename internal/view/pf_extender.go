@@ -7,7 +7,10 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os/exec"
 	"strings"
+
+	gr "runtime"
 
 	"github.com/derailed/k9s/internal"
 	"github.com/derailed/k9s/internal/client"
@@ -145,7 +148,25 @@ func runForward(v ResourceViewer, pf watch.Forwarder, f *portforward.PortForward
 	})
 }
 
-func startFwdCB(v ResourceViewer, path string, pts port.PortTunnels) error {
+func openbrowser(url string) error {
+	var err error
+	switch gr.GOOS {
+	case "linux":
+		err = exec.Command("xdg-open", url).Start()
+	case "windows":
+		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+	case "darwin":
+		err = exec.Command("open", url).Start()
+	default:
+		err = fmt.Errorf("unsupported platform")
+	}
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func startFwdCB(v ResourceViewer, path string, pts port.PortTunnels, openUrl bool) error {
 	if err := pts.CheckAvailable(context.Background()); err != nil {
 		return err
 	}
@@ -169,6 +190,9 @@ func startFwdCB(v ResourceViewer, path string, pts port.PortTunnels) error {
 	}
 	if len(tt) == 1 {
 		v.App().Flash().Infof("PortForward activated %s", tt[0])
+		if openUrl {
+			openbrowser("http://" + v.App().Config.K9s.PortForwardAddress + ":" + tt[0])
+		}
 		return nil
 	}
 	v.App().Flash().Infof("PortForwards activated %s", strings.Join(tt, ","))
@@ -201,7 +225,7 @@ func showFwdDialog(v ResourceViewer, path string, cb PortForwardCB) error {
 			return err
 		}
 
-		return startFwdCB(v, path, pts)
+		return startFwdCB(v, path, pts, false)
 	}
 	ShowPortForwards(v, path, ports, anns, cb)
 

@@ -19,7 +19,7 @@ import (
 const portForwardKey = "portforward"
 
 // PortForwardCB represents a port-forward callback function.
-type PortForwardCB func(ResourceViewer, string, port.PortTunnels) error
+type PortForwardCB func(ResourceViewer, string, port.PortTunnels, bool) error
 
 // ShowPortForwards pops a port forwarding configuration dialog.
 func ShowPortForwards(v ResourceViewer, path string, ports port.ContainerPortSpecs, aa port.Annotations, okFn PortForwardCB) {
@@ -69,6 +69,10 @@ func ShowPortForwards(v ResourceViewer, path string, ports port.ContainerPortSpe
 			field.SetFieldTextColor(styles.FieldFgColor.Color())
 		}
 	}
+	openUrl := false
+	f.AddCheckbox("Open:", false, func(s string, checked bool) {
+		openUrl = checked
+	})
 
 	f.AddButton("OK", func() {
 		if coField.GetText() == "" || loField.GetText() == "" {
@@ -80,7 +84,7 @@ func ShowPortForwards(v ResourceViewer, path string, ports port.ContainerPortSpe
 			v.App().Flash().Err(err)
 			return
 		}
-		if err := okFn(v, path, tt); err != nil {
+		if err := okFn(v, path, tt, openUrl); err != nil {
 			v.App().Flash().Err(err)
 		}
 	})
