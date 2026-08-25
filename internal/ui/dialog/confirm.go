@@ -103,6 +103,48 @@ func ShowConfirm(styles *config.Dialog, pages *ui.Pages, title, msg string, ack 
 	pages.ShowPage(dialogKey)
 }
 
+const yesNoKey = "yesNo"
+
+// ShowConfirmYesNo pops a Yes/No confirmation dialog defaulting focus to Yes.
+func ShowConfirmYesNo(styles *config.Dialog, pages *ui.Pages, title, msg string, yes confirmFunc, no cancelFunc) {
+	f := tview.NewForm().
+		SetItemPadding(0).
+		SetButtonsAlign(tview.AlignCenter).
+		SetButtonBackgroundColor(styles.ButtonBgColor.Color()).
+		SetButtonTextColor(styles.ButtonFgColor.Color()).
+		SetLabelColor(styles.LabelFgColor.Color()).
+		SetFieldTextColor(styles.FieldFgColor.Color()).
+		SetFieldBackgroundColor(styles.BgColor.Color())
+	f.AddButton("Yes", func() {
+		dismissYesNo(pages)
+		yes()
+	})
+	f.AddButton("No", func() {
+		dismissYesNo(pages)
+		no()
+	})
+	for i := range 2 {
+		if b := f.GetButton(i); b != nil {
+			b.SetBackgroundColorActivated(styles.ButtonFocusBgColor.Color())
+			b.SetLabelColorActivated(styles.ButtonFocusFgColor.Color())
+		}
+	}
+	f.SetFocus(0) // Default to "Yes".
+	modal := tview.NewModalForm("<"+title+">", f)
+	modal.SetText(msg)
+	modal.SetTextColor(styles.FgColor.Color())
+	modal.SetDoneFunc(func(int, string) {
+		dismissYesNo(pages)
+		no()
+	})
+	pages.AddPage(yesNoKey, modal, false, false)
+	pages.ShowPage(yesNoKey)
+}
+
+func dismissYesNo(pages *ui.Pages) {
+	pages.RemovePage(yesNoKey)
+}
+
 func dismiss(pages *ui.Pages) {
 	pages.RemovePage(dialogKey)
 }

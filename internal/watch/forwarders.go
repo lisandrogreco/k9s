@@ -70,6 +70,29 @@ func (ff Forwarders) IsPodForwarded(fqn string) bool {
 	return false
 }
 
+// TunnelsFor returns the port tunnels for the port-forwards active on the given pod.
+func (ff Forwarders) TunnelsFor(fqn string) port.PortTunnels {
+	prefix := fqn + "|"
+	tt := make(port.PortTunnels, 0, len(ff))
+	for k, f := range ff {
+		if k != fqn && !strings.HasPrefix(k, prefix) {
+			continue
+		}
+		local, containerPort, ok := strings.Cut(f.Port(), ":")
+		if !ok {
+			continue
+		}
+		tt = append(tt, port.PortTunnel{
+			Address:       f.Address(),
+			Container:     f.Container(),
+			LocalPort:     local,
+			ContainerPort: containerPort,
+		})
+	}
+
+	return tt
+}
+
 // IsContainerForwarded checks if pod has a forward.
 func (ff Forwarders) IsContainerForwarded(fqn, co string) bool {
 	fqn += "|" + co
